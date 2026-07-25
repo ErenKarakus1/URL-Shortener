@@ -1,6 +1,7 @@
 # URL Shortener
 
-A minimal URL shortener backend built with Go, Gin, and MongoDB.
+A minimal full-stack URL shortener built with React, Go, Gin, MongoDB, and
+Redis.
 
 It provides two operations:
 
@@ -30,7 +31,8 @@ connection.
 
 ### Requirements
 
-- Go 1.26 or newer
+- Go 1.26.5 or newer
+- Node.js 24
 - MongoDB running locally or a MongoDB Atlas connection string
 - Redis running locally
 
@@ -82,7 +84,27 @@ For a deployed frontend, set `VITE_API_URL` to the public backend API URL and
 `VITE_SHORT_URL_BASE` to the public base used for generated links. By default,
 generated links use the same origin as the React application.
 
+## Project structure
+
+```text
+backend/
+├── main.go          # Configuration and application startup
+├── server.go        # Router and HTTP handlers
+├── url.go           # URL models, validation, and short-code generation
+├── mongo_store.go   # MongoDB persistence
+├── rate_limiter.go  # Redis rate limiting
+└── cors.go          # CORS middleware
+
+frontend/
+├── src/             # React application and tests
+├── nginx.conf       # SPA routing and /api proxy
+└── Dockerfile       # Production frontend image
+```
+
 ## API
+
+The Go backend exposes the routes below directly. Through the Dockerized Nginx
+frontend, prefix them with `/api`, such as `POST /api/shorten`.
 
 ### Shorten a URL
 
@@ -126,6 +148,14 @@ Known codes return the destination as JSON with `200 OK`. Unknown codes return
 `404 Not Found`. React uses this endpoint to show a five-second countdown page.
 **Redirect now** continues immediately. **Cancel** shows a three-second
 countdown before returning to the main page.
+
+### Health
+
+```http
+GET /health
+```
+
+Returns `200 OK` when the Go server is running.
 
 ## Behavior
 
