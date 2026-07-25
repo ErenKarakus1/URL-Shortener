@@ -32,10 +32,26 @@ Do not commit connection strings containing credentials.
 
 ## Run
 
+Start the backend:
+
 ```powershell
 cd backend
 go run .
 ```
+
+In another terminal, install and start the React frontend:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`. During local development, Vite proxies `/api`
+requests to the backend at `http://localhost:8080`.
+
+For a deployed frontend, set `VITE_API_URL` to the public backend URL when
+building the app.
 
 ## API
 
