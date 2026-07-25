@@ -14,12 +14,12 @@ It provides two operations:
 
 ```mermaid
 flowchart LR
-    User[User] --> Frontend[React in the browser]
-    Frontend -->|/api requests| Nginx[Nginx]
-    Nginx -.->|Serves application| Frontend
-    Nginx --> Backend[Go + Gin API]
-    Backend -->|URL mappings| MongoDB[(MongoDB)]
-    Backend -->|Rate-limit counters| Redis[(Redis)]
+    User[User] --> Browser[Browser running React]
+    Browser -->|Requests the app and /api routes| Nginx[Nginx]
+    Nginx -->|Serves React files| Browser
+    Nginx -->|Proxies /api requests| Backend[Go + Gin API]
+    Backend -->|Reads and writes URL mappings| MongoDB[(MongoDB)]
+    Backend -->|Updates rate-limit counters| Redis[(Redis)]
 ```
 
 Nginx serves the React application and proxies `/api` requests to the Go
