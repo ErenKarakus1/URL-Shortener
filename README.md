@@ -1,5 +1,7 @@
 # URL Shortener
 
+[![CI](https://github.com/ErenKarakus1/URL-Shortener/actions/workflows/ci.yml/badge.svg)](https://github.com/ErenKarakus1/URL-Shortener/actions/workflows/ci.yml)
+
 A minimal full-stack URL shortener built with React, Go, Gin, MongoDB, and
 Redis.
 
