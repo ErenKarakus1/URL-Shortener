@@ -7,7 +7,28 @@ It provides two operations:
 - Submit a long URL and receive a deterministic six-character short code.
 - Visit a short code in React, review the destination, and continue automatically or manually.
 
-## Requirements
+## Run with Docker
+
+Docker Compose runs the React frontend, Nginx API proxy, Go backend, and MongoDB
+together:
+
+```powershell
+docker compose up --build
+```
+
+Open `http://localhost:3000`. Stop the stack with:
+
+```powershell
+docker compose down
+```
+
+MongoDB data is kept in the `mongodb_data` Docker volume. Copy `.env.example`
+to `.env` if you want to change the frontend port or use a different MongoDB
+connection.
+
+## Run locally
+
+### Requirements
 
 - Go 1.26 or newer
 - MongoDB running locally or a MongoDB Atlas connection string
@@ -30,8 +51,6 @@ $env:MONGODB_URI = "mongodb+srv://USERNAME:PASSWORD@CLUSTER/"
 
 Do not commit connection strings containing credentials.
 
-## Run
-
 Start the backend:
 
 ```powershell
@@ -51,8 +70,8 @@ Open `http://localhost:5173`. During local development, Vite proxies `/api`
 requests to the backend at `http://localhost:8080`.
 
 For a deployed frontend, set `VITE_API_URL` to the public backend API URL and
-`VITE_SHORT_URL_BASE` to the public base used for generated links. Locally,
-generated links default to `http://localhost:8080/{code}`.
+`VITE_SHORT_URL_BASE` to the public base used for generated links. By default,
+generated links use the same origin as the React application.
 
 ## API
 
