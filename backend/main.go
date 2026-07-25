@@ -60,6 +60,14 @@ func createShortURL(longURL string, salt int) string {
 
 func validateLongURL(rawURL string) (string, bool) {
 	trimmedURL := strings.TrimSpace(rawURL)
+	lowerURL := strings.ToLower(trimmedURL)
+	if !strings.Contains(trimmedURL, "://") {
+		if strings.HasPrefix(lowerURL, "http:") || strings.HasPrefix(lowerURL, "https:") {
+			return "", false
+		}
+		trimmedURL = "https://" + trimmedURL
+	}
+
 	parsedURL, err := url.Parse(trimmedURL)
 	if err != nil {
 		return "", false

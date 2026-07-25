@@ -84,13 +84,25 @@ func TestValidateLongURL(t *testing.T) {
 			wantValid: true,
 		},
 		{
-			name:      "rejects missing scheme",
+			name:      "adds HTTPS to missing scheme",
 			input:     "example.com",
-			wantValid: false,
+			wantURL:   "https://example.com",
+			wantValid: true,
+		},
+		{
+			name:      "adds HTTPS to domain with path",
+			input:     "www.example.com/CaseSensitive",
+			wantURL:   "https://www.example.com/CaseSensitive",
+			wantValid: true,
 		},
 		{
 			name:      "rejects unsupported scheme",
 			input:     "ftp://example.com",
+			wantValid: false,
+		},
+		{
+			name:      "rejects malformed HTTP scheme",
+			input:     "https:/example.com",
 			wantValid: false,
 		},
 		{
@@ -183,7 +195,7 @@ func TestShortenRejectsInvalidURL(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := newRouter(newFakeStore())
 
-	response := performRequest(router, http.MethodPost, "/shorten", `{"longurl":"example.com"}`)
+	response := performRequest(router, http.MethodPost, "/shorten", `{"longurl":"ftp://example.com"}`)
 	if response.Code != http.StatusBadRequest {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusBadRequest)
 	}

@@ -1,12 +1,12 @@
 import { useState } from "react";
 
 const apiBaseURL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
+const shortURLBase = (
+  import.meta.env.VITE_SHORT_URL_BASE || "http://localhost:8080"
+).replace(/\/$/, "");
 
 function buildShortURL(code) {
-  if (apiBaseURL.startsWith("http://") || apiBaseURL.startsWith("https://")) {
-    return `${apiBaseURL}/${code}`;
-  }
-  return `${window.location.origin}${apiBaseURL}/${code}`;
+  return `${shortURLBase}/${code}`;
 }
 
 export default function App() {
@@ -69,10 +69,11 @@ export default function App() {
           <div className="input-row">
             <input
               id="long-url"
-              type="url"
+              type="text"
+              inputMode="url"
               value={longURL}
               onChange={(event) => setLongURL(event.target.value)}
-              placeholder="https://example.com/a/very/long/link"
+              placeholder="example.com/a/very/long/link"
               autoComplete="url"
               required
             />

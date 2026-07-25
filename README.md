@@ -50,8 +50,9 @@ npm run dev
 Open `http://localhost:5173`. During local development, Vite proxies `/api`
 requests to the backend at `http://localhost:8080`.
 
-For a deployed frontend, set `VITE_API_URL` to the public backend URL when
-building the app.
+For a deployed frontend, set `VITE_API_URL` to the public backend API URL and
+`VITE_SHORT_URL_BASE` to the public base used for generated links. Locally,
+generated links default to `http://localhost:8080/{code}`.
 
 ## API
 
@@ -98,6 +99,7 @@ Known codes return `301 Moved Permanently`. Unknown codes return `404 Not Found`
 ## Behavior
 
 - Only HTTP and HTTPS URLs with a hostname are accepted.
+- URLs without a scheme default to HTTPS.
 - Surrounding spaces are removed.
 - The scheme and hostname are normalized to lowercase.
 - Path, query, and fragment casing is preserved.
