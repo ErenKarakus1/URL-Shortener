@@ -58,6 +58,47 @@ describe("URL shortener", () => {
     );
   });
 
+  it("shows a user-friendly message when the service cannot be reached", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new TypeError("Failed to fetch"))));
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("Long URL"), {
+      target: { value: "example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Shorten URL" }));
+
+    expect(
+      await screen.findByText(
+        "We couldn’t connect to the service. Please check your connection and try again.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("does not expose a malformed server response", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve({
+          ok: false,
+          status: 500,
+          json: () => Promise.reject(new SyntaxError("Unexpected token")),
+        }),
+      ),
+    );
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText("Long URL"), {
+      target: { value: "example.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Shorten URL" }));
+
+    expect(
+      await screen.findByText(
+        "Something went wrong on our side. Please try again in a moment.",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("cancels the destination redirect and starts the return-home countdown", async () => {
     window.history.replaceState({}, "", "/abc123");
     vi.stubGlobal(

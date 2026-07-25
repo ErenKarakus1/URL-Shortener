@@ -67,7 +67,7 @@ func rateLimitMiddleware(limiter RateLimiter) gin.HandlerFunc {
 
 		allowed, remaining, err := limiter.Allow(ctx, clientIP(c.Request))
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"message": "Rate limiter is unavailable"})
+			c.AbortWithStatusJSON(http.StatusServiceUnavailable, gin.H{"message": "The service is temporarily unavailable. Please try again shortly."})
 			return
 		}
 
@@ -75,7 +75,7 @@ func rateLimitMiddleware(limiter RateLimiter) gin.HandlerFunc {
 		c.Header("X-RateLimit-Remaining", strconv.Itoa(remaining))
 		if !allowed {
 			c.Header("Retry-After", strconv.Itoa(max(1, int(limiter.Window().Seconds()))))
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"message": "Too many requests"})
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"message": "Too many requests. Please wait before trying again."})
 			return
 		}
 

@@ -9,6 +9,40 @@ function buildShortURL(code) {
   return `${shortURLBase}/${code}`;
 }
 
+async function readJSON(response) {
+  try {
+    return await response.json();
+  } catch {
+    return {};
+  }
+}
+
+function shortenErrorMessage(response, data) {
+  if (response.status === 400 || response.status === 413) {
+    return data.message || "Please enter a valid web address.";
+  }
+  if (response.status === 429) {
+    return "You’ve made too many requests. Please wait a moment and try again.";
+  }
+  if (response.status >= 500) {
+    return "Something went wrong on our side. Please try again in a moment.";
+  }
+  return "We couldn’t shorten this URL. Please try again.";
+}
+
+function resolveErrorMessage(response) {
+  if (response.status === 404) {
+    return "This short link does not exist.";
+  }
+  if (response.status >= 500) {
+    return "This link is temporarily unavailable. Please try again in a moment.";
+  }
+  return "We couldn’t open this short link. Please try again.";
+}
+
+const connectionErrorMessage =
+  "We couldn’t connect to the service. Please check your connection and try again.";
+
 function HomePage() {
   const [longURL, setLongURL] = useState("");
   const [shortURL, setShortURL] = useState("");
@@ -29,27 +63,32 @@ function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ longurl: longURL }),
       });
-      const data = await response.json();
+      const data = await readJSON(response);
 
       if (!response.ok) {
-        throw new Error(data.message || "Unable to shorten this URL.");
+        setError(shortenErrorMessage(response, data));
+        return;
+      }
+      if (!data.shorturl) {
+        setError("We received an unexpected response. Please try again.");
+        return;
       }
 
       setShortURL(buildShortURL(data.shorturl));
-    } catch (requestError) {
-      setError(
-        requestError instanceof TypeError
-          ? "The server is unavailable. Make sure the backend is running."
-          : requestError.message,
-      );
+    } catch {
+      setError(connectionErrorMessage);
     } finally {
       setIsLoading(false);
     }
   }
 
   async function copyShortURL() {
-    await navigator.clipboard.writeText(shortURL);
-    setCopied(true);
+    try {
+      await navigator.clipboard.writeText(shortURL);
+      setCopied(true);
+    } catch {
+      setError("We couldn’t copy the link. Please select and copy it manually.");
+    }
   }
 
   return (
@@ -123,25 +162,24 @@ function RedirectPage({ shortCode }) {
           `${apiBaseURL}/resolve/${encodeURIComponent(shortCode)}`,
           { signal: controller.signal },
         );
-        const data = await response.json();
+        const data = await readJSON(response);
 
         if (!response.ok) {
-          throw new Error(
-            response.status === 404
-              ? "This short link does not exist."
-              : data.message || "Unable to resolve this short link.",
-          );
+          setError(resolveErrorMessage(response));
+          setPhase("error");
+          return;
+        }
+        if (!data.longurl) {
+          setError("This link returned an unexpected response. Please try again.");
+          setPhase("error");
+          return;
         }
 
         setDestination(data.longurl);
         setPhase("redirecting");
       } catch (requestError) {
         if (requestError.name !== "AbortError") {
-          setError(
-            requestError instanceof TypeError
-              ? "The server is unavailable. Make sure the backend is running."
-              : requestError.message,
-          );
+          setError(connectionErrorMessage);
           setPhase("error");
         }
       }

@@ -30,20 +30,20 @@ func shorten(store URLStore) gin.HandlerFunc {
 		if err := c.ShouldBindJSON(&request); err != nil {
 			var sizeError *http.MaxBytesError
 			if errors.As(err, &sizeError) {
-				c.IndentedJSON(http.StatusRequestEntityTooLarge, gin.H{"message": "Request body is too large"})
+				c.IndentedJSON(http.StatusRequestEntityTooLarge, gin.H{"message": "This request is too large. Please enter a shorter URL."})
 				return
 			}
-			c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "A valid long URL must be provided"})
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Please enter a valid URL."})
 			return
 		}
 		if len(strings.TrimSpace(request.LongURL)) > maxLongURLLength {
-			c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Long URL is too long"})
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "This URL is too long. Please use a URL under 2,048 characters."})
 			return
 		}
 
 		longURL, valid := validateLongURL(request.LongURL)
 		if !valid {
-			c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "A valid HTTP or HTTPS URL must be provided"})
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Please enter a valid HTTP or HTTPS URL."})
 			return
 		}
 
@@ -61,7 +61,7 @@ func shorten(store URLStore) gin.HandlerFunc {
 				continue
 			}
 			if err != nil {
-				c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Could not save URL"})
+				c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "We couldn't create a short URL. Please try again."})
 				return
 			}
 
@@ -73,7 +73,7 @@ func shorten(store URLStore) gin.HandlerFunc {
 			return
 		}
 
-		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Could not generate a unique short URL"})
+		c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "We couldn't create a short URL. Please try again."})
 	}
 }
 
@@ -84,11 +84,11 @@ func resolveLongURL(store URLStore) gin.HandlerFunc {
 
 		url, err := store.FindByShortURL(ctx, c.Param("shorturl"))
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Short URL not found"})
+			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "This short link does not exist."})
 			return
 		}
 		if err != nil {
-			c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "Could not retrieve URL"})
+			c.IndentedJSON(http.StatusInternalServerError, gin.H{"message": "We couldn't open this short link. Please try again."})
 			return
 		}
 
