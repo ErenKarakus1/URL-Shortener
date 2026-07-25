@@ -11,6 +11,17 @@ services:
       retries: 10
       start_period: 10s
 
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
   backend:
     build:
       context: ./backend
@@ -18,11 +29,16 @@ services:
     environment:
       MONGODB_URI: ${COMPOSE_MONGODB_URI:-mongodb://mongodb:27017}
       MONGODB_DATABASE: ${COMPOSE_MONGODB_DATABASE:-url_shortener}
+      REDIS_ADDRESS: ${REDIS_ADDRESS:-redis:6379}
+      RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-30}
+      RATE_LIMIT_WINDOW_SECONDS: ${RATE_LIMIT_WINDOW_SECONDS:-60}
       SERVER_ADDRESS: 0.0.0.0:8080
       GIN_MODE: release
       CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-}
     depends_on:
       mongodb:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   frontend:
@@ -32,7 +48,8 @@ services:
     ports:
       - "${APP_PORT:-3000}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   mongodb_data:

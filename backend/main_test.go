@@ -7,7 +7,9 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -17,6 +19,24 @@ type fakeStore struct {
 	urls    map[string]URLData
 	saveErr error
 	findErr error
+}
+
+type fakeRateLimiter struct {
+	allowed   bool
+	remaining int
+	err       error
+}
+
+func (l *fakeRateLimiter) Allow(_ context.Context, _ string) (bool, int, error) {
+	return l.allowed, l.remaining, l.err
+}
+
+func (l *fakeRateLimiter) Limit() int {
+	return 2
+}
+
+func (l *fakeRateLimiter) Window() time.Duration {
+	return time.Minute
 }
 
 func newFakeStore() *fakeStore {
@@ -201,6 +221,28 @@ func TestShortenRejectsInvalidURL(t *testing.T) {
 	}
 }
 
+func TestShortenRejectsOversizedBody(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := newRouter(newFakeStore())
+	body := `{"longurl":"` + strings.Repeat("a", maxRequestBodyBytes) + `"}`
+
+	response := performRequest(router, http.MethodPost, "/shorten", body)
+	if response.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusRequestEntityTooLarge)
+	}
+}
+
+func TestShortenRejectsOverlongURL(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := newRouter(newFakeStore())
+	body := `{"longurl":"https://example.com/` + strings.Repeat("a", maxLongURLLength) + `"}`
+
+	response := performRequest(router, http.MethodPost, "/shorten", body)
+	if response.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusBadRequest)
+	}
+}
+
 func TestShortenRetriesCollisionWithSalt(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	store := newFakeStore()
@@ -311,5 +353,51 @@ func TestCORSRejectsUnknownOrigin(t *testing.T) {
 
 	if origin := response.Header().Get("Access-Control-Allow-Origin"); origin != "" {
 		t.Fatalf("unexpected allowed origin %q", origin)
+	}
+}
+
+func TestHealthEndpoint(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	response := performRequest(newRouter(newFakeStore()), http.MethodGet, "/health", "")
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
+	}
+}
+
+func TestRateLimiterRejectsRequest(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	limiter := &fakeRateLimiter{allowed: false}
+	router := newRouter(newFakeStore(), limiter)
+
+	response := performRequest(
+		router,
+		http.MethodPost,
+		"/shorten",
+		`{"longurl":"https://example.com"}`,
+	)
+
+	if response.Code != http.StatusTooManyRequests {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusTooManyRequests)
+	}
+	if retryAfter := response.Header().Get("Retry-After"); retryAfter != "60" {
+		t.Fatalf("Retry-After = %q, want %q", retryAfter, "60")
+	}
+}
+
+func TestRateLimiterFailureReturnsServiceUnavailable(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	limiter := &fakeRateLimiter{err: errors.New("Redis unavailable")}
+	router := newRouter(newFakeStore(), limiter)
+
+	response := performRequest(
+		router,
+		http.MethodPost,
+		"/shorten",
+		`{"longurl":"https://example.com"}`,
+	)
+
+	if response.Code != http.StatusServiceUnavailable {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusServiceUnavailable)
 	}
 }

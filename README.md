@@ -9,8 +9,8 @@ It provides two operations:
 
 ## Run with Docker
 
-Docker Compose runs the React frontend, Nginx API proxy, Go backend, and MongoDB
-together:
+Docker Compose runs the React frontend, Nginx API proxy, Go backend, MongoDB,
+and Redis together:
 
 ```powershell
 docker compose up --build
@@ -32,6 +32,7 @@ connection.
 
 - Go 1.26 or newer
 - MongoDB running locally or a MongoDB Atlas connection string
+- Redis running locally
 
 ## Configuration
 
@@ -41,6 +42,9 @@ The backend reads these optional environment variables:
 | --- | --- |
 | `MONGODB_URI` | `mongodb://localhost:27017` |
 | `MONGODB_DATABASE` | `url_shortener` |
+| `REDIS_ADDRESS` | `localhost:6379` |
+| `RATE_LIMIT_REQUESTS` | `30` |
+| `RATE_LIMIT_WINDOW_SECONDS` | `60` |
 | `SERVER_ADDRESS` | `localhost:8080` |
 | `CORS_ALLOWED_ORIGIN` | Empty |
 
@@ -134,6 +138,9 @@ countdown before returning to the main page.
 - Hash collisions are resolved deterministically by retrying with an incrementing salt.
 - Short codes are protected by a unique MongoDB index.
 - MongoDB operations time out after three seconds.
+- Request bodies are limited to 4 KiB and URLs to 2,048 characters.
+- Redis limits each client to 30 shortening requests per 60-second window by default.
+- Container health checks cover MongoDB, Redis, the Go API, and Nginx.
 
 ## Tests
 
@@ -141,3 +148,14 @@ countdown before returning to the main page.
 cd backend
 go test ./...
 ```
+
+Frontend tests and production build:
+
+```powershell
+cd frontend
+npm test
+npm run build
+```
+
+GitHub Actions runs the backend tests, frontend tests, production build, and
+Docker image builds on every push and pull request.

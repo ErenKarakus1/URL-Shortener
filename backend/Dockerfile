@@ -8,12 +8,18 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /url-shortener .
 
-FROM scratch
+FROM alpine:3.23
 
-COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --from=build /url-shortener /url-shortener
+RUN apk add --no-cache ca-certificates \
+    && addgroup -S app \
+    && adduser -S -G app app
 
-USER 65532:65532
+COPY --from=build /url-shortener /usr/local/bin/url-shortener
+
+USER app
 EXPOSE 8080
 
-ENTRYPOINT ["/url-shortener"]
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget -q -O /dev/null http://127.0.0.1:8080/health || exit 1
+
+ENTRYPOINT ["url-shortener"]
