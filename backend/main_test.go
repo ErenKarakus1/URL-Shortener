@@ -223,18 +223,26 @@ func TestShortenRetriesCollisionWithSalt(t *testing.T) {
 	}
 }
 
-func TestReturnLongURLRedirects(t *testing.T) {
+func TestResolveLongURL(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	store := newFakeStore()
 	store.urls["abc123"] = URLData{ShortURL: "abc123", LongURL: "https://example.com/path"}
 	router := newRouter(store)
 
-	response := performRequest(router, http.MethodGet, "/abc123", "")
-	if response.Code != http.StatusMovedPermanently {
-		t.Fatalf("status = %d, want %d", response.Code, http.StatusMovedPermanently)
+	response := performRequest(router, http.MethodGet, "/resolve/abc123", "")
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusOK)
 	}
-	if location := response.Header().Get("Location"); location != "https://example.com/path" {
-		t.Fatalf("Location = %q, want %q", location, "https://example.com/path")
+
+	var result ShortenRequest
+	if err := json.Unmarshal(response.Body.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if result.LongURL != "https://example.com/path" {
+		t.Fatalf("long URL = %q, want %q", result.LongURL, "https://example.com/path")
+	}
+	if cacheControl := response.Header().Get("Cache-Control"); cacheControl != "no-store" {
+		t.Fatalf("Cache-Control = %q, want %q", cacheControl, "no-store")
 	}
 }
 
@@ -242,7 +250,7 @@ func TestReturnLongURLNotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := newRouter(newFakeStore())
 
-	response := performRequest(router, http.MethodGet, "/missing", "")
+	response := performRequest(router, http.MethodGet, "/resolve/missing", "")
 	if response.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, want %d", response.Code, http.StatusNotFound)
 	}
@@ -266,7 +274,7 @@ func TestDatabaseErrorsReturnInternalServerError(t *testing.T) {
 
 	findStore := newFakeStore()
 	findStore.findErr = databaseError
-	findResponse := performRequest(newRouter(findStore), http.MethodGet, "/abc123", "")
+	findResponse := performRequest(newRouter(findStore), http.MethodGet, "/resolve/abc123", "")
 	if findResponse.Code != http.StatusInternalServerError {
 		t.Fatalf("find status = %d, want %d", findResponse.Code, http.StatusInternalServerError)
 	}

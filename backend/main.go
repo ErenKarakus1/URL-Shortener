@@ -127,7 +127,7 @@ func shorten(store URLStore) gin.HandlerFunc {
 	}
 }
 
-func returnLongURL(store URLStore) gin.HandlerFunc {
+func resolveLongURL(store URLStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), databaseTimeout)
 		defer cancel()
@@ -142,14 +142,15 @@ func returnLongURL(store URLStore) gin.HandlerFunc {
 			return
 		}
 
-		c.Redirect(http.StatusMovedPermanently, url.LongURL)
+		c.Header("Cache-Control", "no-store")
+		c.IndentedJSON(http.StatusOK, gin.H{"longurl": url.LongURL})
 	}
 }
 
 func newRouter(store URLStore) *gin.Engine {
 	router := gin.Default()
 	router.POST("/shorten", shorten(store))
-	router.GET("/:shorturl", returnLongURL(store))
+	router.GET("/resolve/:shorturl", resolveLongURL(store))
 	return router
 }
 

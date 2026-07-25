@@ -207,6 +207,82 @@ input:focus {
   text-align: center;
 }
 
+.redirect-card {
+  text-align: center;
+}
+
+.redirect-mark {
+  margin: 0 auto;
+}
+
+.redirect-status {
+  margin-bottom: 12px;
+}
+
+.destination {
+  display: block;
+  overflow: hidden;
+  margin-bottom: 24px;
+  padding: 13px 15px;
+  border: 1px solid #d7e3d9;
+  border-radius: 12px;
+  color: #205c3d;
+  background: #f4f9f3;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.countdown-track {
+  height: 8px;
+  overflow: hidden;
+  margin: 26px 0;
+  border-radius: 999px;
+  background: #e1e7df;
+}
+
+.countdown-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: #226845;
+  transition: width 1s linear;
+}
+
+.redirect-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.redirect-actions button,
+.home-link {
+  min-height: 48px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.redirect-now {
+  border: 0;
+  color: white;
+  background: #226845;
+}
+
+.cancel-redirect {
+  border: 1px solid #cbd3cc;
+  color: #35443a;
+  background: white;
+}
+
+.home-link {
+  padding: 0 20px;
+  color: white;
+  background: #226845;
+}
+
 @media (max-width: 620px) {
   .input-row {
     grid-template-columns: 1fr;
@@ -223,6 +299,10 @@ input:focus {
 
   .copy-button {
     width: 100%;
+  }
+
+  .redirect-actions {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -5,7 +5,7 @@ A minimal URL shortener backend built with Go, Gin, and MongoDB.
 It provides two operations:
 
 - Submit a long URL and receive a deterministic six-character short code.
-- Visit a short code and receive a permanent redirect to the long URL.
+- Visit a short code in React, review the destination, and continue automatically or manually.
 
 ## Requirements
 
@@ -88,13 +88,16 @@ Invoke-RestMethod `
   -Body '{"longurl":"https://example.com/path"}'
 ```
 
-### Follow a short URL
+### Resolve a short URL
 
 ```http
-GET /m8ApTP
+GET /resolve/m8ApTP
 ```
 
-Known codes return `301 Moved Permanently`. Unknown codes return `404 Not Found`.
+Known codes return the destination as JSON with `200 OK`. Unknown codes return
+`404 Not Found`. React uses this endpoint to show a five-second countdown page.
+**Redirect now** continues immediately. **Cancel** shows a three-second
+countdown before returning to the main page.
 
 ## Behavior
 
