@@ -43,7 +43,10 @@ func (s *MongoStore) Save(ctx context.Context, url URLData) (bool, error) {
 	_, err = s.collection.InsertOne(ctx, url)
 	if mongo.IsDuplicateKeyError(err) {
 		existing, findErr := s.FindByShortURL(ctx, url.ShortURL)
-		if findErr == nil && existing.LongURL == url.LongURL {
+		if findErr != nil {
+			return false, findErr
+		}
+		if existing.LongURL == url.LongURL {
 			return false, nil
 		}
 		return false, ErrShortURLCollision

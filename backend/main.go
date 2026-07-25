@@ -27,9 +27,15 @@ type ShortenRequest struct {
 	LongURL string `json:"longurl"`
 }
 
+type URLStore interface {
+	Save(context.Context, URLData) (bool, error)
+	FindByShortURL(context.Context, string) (URLData, error)
+}
+
 const (
 	base62Alphabet      = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	maxCollisionRetries = 100
+	databaseTimeout     = 3 * time.Second
 )
 
 func createShortURL(longURL string, salt int) string {
@@ -69,7 +75,7 @@ func validateLongURL(rawURL string) (string, bool) {
 	return parsedURL.String(), true
 }
 
-func shorten(store *MongoStore) gin.HandlerFunc {
+func shorten(store URLStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var request ShortenRequest
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -83,13 +89,16 @@ func shorten(store *MongoStore) gin.HandlerFunc {
 			return
 		}
 
+		ctx, cancel := context.WithTimeout(c.Request.Context(), databaseTimeout)
+		defer cancel()
+
 		for salt := 0; salt < maxCollisionRetries; salt++ {
 			newURL := URLData{
 				ShortURL: createShortURL(longURL, salt),
 				LongURL:  longURL,
 			}
 
-			created, err := store.Save(c.Request.Context(), newURL)
+			created, err := store.Save(ctx, newURL)
 			if errors.Is(err, ErrShortURLCollision) {
 				continue
 			}
@@ -110,9 +119,12 @@ func shorten(store *MongoStore) gin.HandlerFunc {
 	}
 }
 
-func returnLongURL(store *MongoStore) gin.HandlerFunc {
+func returnLongURL(store URLStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		url, err := store.FindByShortURL(c.Request.Context(), c.Param("shorturl"))
+		ctx, cancel := context.WithTimeout(c.Request.Context(), databaseTimeout)
+		defer cancel()
+
+		url, err := store.FindByShortURL(ctx, c.Param("shorturl"))
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			c.IndentedJSON(http.StatusNotFound, gin.H{"message": "Short URL not found"})
 			return
@@ -126,11 +138,24 @@ func returnLongURL(store *MongoStore) gin.HandlerFunc {
 	}
 }
 
-func main() {
-	mongoURI := os.Getenv("MONGODB_URI")
-	if mongoURI == "" {
-		mongoURI = "mongodb://localhost:27017"
+func newRouter(store URLStore) *gin.Engine {
+	router := gin.Default()
+	router.POST("/shorten", shorten(store))
+	router.GET("/:shorturl", returnLongURL(store))
+	return router
+}
+
+func envOrDefault(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
 	}
+	return fallback
+}
+
+func main() {
+	mongoURI := envOrDefault("MONGODB_URI", "mongodb://localhost:27017")
+	databaseName := envOrDefault("MONGODB_DATABASE", "url_shortener")
+	serverAddress := envOrDefault("SERVER_ADDRESS", "localhost:8080")
 
 	client, err := mongo.Connect(options.Client().ApplyURI(mongoURI))
 	if err != nil {
@@ -148,15 +173,12 @@ func main() {
 		log.Fatalf("connect to MongoDB: %v", err)
 	}
 
-	store := NewMongoStore(client.Database("url_shortener").Collection("urls"))
+	store := NewMongoStore(client.Database(databaseName).Collection("urls"))
 	if err := store.CreateIndexes(ctx); err != nil {
 		log.Fatalf("create MongoDB indexes: %v", err)
 	}
 
-	router := gin.Default()
-	router.POST("/shorten", shorten(store))
-	router.GET("/:shorturl", returnLongURL(store))
-	if err := router.Run("localhost:8080"); err != nil {
+	if err := newRouter(store).Run(serverAddress); err != nil {
 		log.Fatal(err)
 	}
 }
