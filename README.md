@@ -10,6 +10,22 @@ It provides two operations:
 - Submit a long URL and receive a deterministic six-character short code.
 - Visit a short code in React, review the destination, and continue automatically or manually.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    User[User] --> Frontend[React in the browser]
+    Frontend -->|/api requests| Nginx[Nginx]
+    Nginx -.->|Serves application| Frontend
+    Nginx --> Backend[Go + Gin API]
+    Backend -->|URL mappings| MongoDB[(MongoDB)]
+    Backend -->|Rate-limit counters| Redis[(Redis)]
+```
+
+Nginx serves the React application and proxies `/api` requests to the Go
+backend. MongoDB stores URL mappings, while Redis keeps temporary rate-limit
+counters.
+
 ## Run with Docker
 
 Docker Compose runs the React frontend, Nginx API proxy, Go backend, MongoDB,
@@ -191,3 +207,18 @@ npm run build
 
 GitHub Actions runs the backend tests, frontend tests, production build, and
 Docker image builds on every push and pull request.
+
+## Future improvements
+
+The current version intentionally focuses on the core shortening and redirect
+flow. Possible next improvements include:
+
+- Add integration and end-to-end tests for MongoDB, Redis, and browser flows.
+- Improve health checks so they report dependency readiness, not only API availability.
+- Add structured server logs and request IDs for production troubleshooting.
+- Add graceful shutdown so in-flight requests can finish during deployments.
+- Replace the fixed-window rate limiter with a smoother sliding-window or token-bucket strategy.
+- Add configurable link expiration and automatic cleanup of expired mappings.
+- Add optional custom short codes while preserving uniqueness checks.
+- Improve accessibility with automated checks and broader keyboard and screen-reader testing.
+- Add production deployment documentation covering HTTPS, secrets, backups, and monitoring.
