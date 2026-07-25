@@ -42,6 +42,7 @@ The backend reads these optional environment variables:
 | `MONGODB_URI` | `mongodb://localhost:27017` |
 | `MONGODB_DATABASE` | `url_shortener` |
 | `SERVER_ADDRESS` | `localhost:8080` |
+| `CORS_ALLOWED_ORIGIN` | Empty |
 
 For MongoDB Atlas, set the connection string in PowerShell before starting the backend:
 
@@ -50,6 +51,10 @@ $env:MONGODB_URI = "mongodb+srv://USERNAME:PASSWORD@CLUSTER/"
 ```
 
 Do not commit connection strings containing credentials.
+
+The local Vite proxy and Docker stack use the same origin and do not need CORS.
+If the frontend is deployed separately, set `CORS_ALLOWED_ORIGIN` to its exact
+origin, such as `https://short.example.com`.
 
 Start the backend:
 

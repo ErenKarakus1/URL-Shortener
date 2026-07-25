@@ -149,6 +149,7 @@ func resolveLongURL(store URLStore) gin.HandlerFunc {
 
 func newRouter(store URLStore) *gin.Engine {
 	router := gin.Default()
+	router.Use(corsMiddleware(os.Getenv("CORS_ALLOWED_ORIGIN")))
 	router.POST("/shorten", shorten(store))
 	router.GET("/resolve/:shorturl", resolveLongURL(store))
 	return router

@@ -20,6 +20,7 @@ services:
       MONGODB_DATABASE: ${COMPOSE_MONGODB_DATABASE:-url_shortener}
       SERVER_ADDRESS: 0.0.0.0:8080
       GIN_MODE: release
+      CORS_ALLOWED_ORIGIN: ${CORS_ALLOWED_ORIGIN:-}
     depends_on:
       mongodb:
         condition: service_healthy

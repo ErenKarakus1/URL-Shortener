@@ -279,3 +279,37 @@ func TestDatabaseErrorsReturnInternalServerError(t *testing.T) {
 		t.Fatalf("find status = %d, want %d", findResponse.Code, http.StatusInternalServerError)
 	}
 }
+
+func TestCORSPreflightForAllowedOrigin(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	t.Setenv("CORS_ALLOWED_ORIGIN", "https://short.example.com")
+	router := newRouter(newFakeStore())
+
+	request := httptest.NewRequest(http.MethodOptions, "/shorten", nil)
+	request.Header.Set("Origin", "https://short.example.com")
+	request.Header.Set("Access-Control-Request-Method", http.MethodPost)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d", response.Code, http.StatusNoContent)
+	}
+	if origin := response.Header().Get("Access-Control-Allow-Origin"); origin != "https://short.example.com" {
+		t.Fatalf("allowed origin = %q, want %q", origin, "https://short.example.com")
+	}
+}
+
+func TestCORSRejectsUnknownOrigin(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	t.Setenv("CORS_ALLOWED_ORIGIN", "https://short.example.com")
+	router := newRouter(newFakeStore())
+
+	request := httptest.NewRequest(http.MethodOptions, "/shorten", nil)
+	request.Header.Set("Origin", "https://untrusted.example")
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if origin := response.Header().Get("Access-Control-Allow-Origin"); origin != "" {
+		t.Fatalf("unexpected allowed origin %q", origin)
+	}
+}
