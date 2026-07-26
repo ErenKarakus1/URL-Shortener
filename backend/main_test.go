@@ -131,6 +131,21 @@ func TestValidateLongURL(t *testing.T) {
 			wantValid: false,
 		},
 		{
+			name:      "rejects hostname without a dot",
+			input:     "google",
+			wantValid: false,
+		},
+		{
+			name:      "rejects hostname ending with a dot",
+			input:     "google.",
+			wantValid: false,
+		},
+		{
+			name:      "rejects empty hostname label",
+			input:     "example..com",
+			wantValid: false,
+		},
+		{
 			name:      "rejects malformed URL",
 			input:     "https://example.com/%zz",
 			wantValid: false,

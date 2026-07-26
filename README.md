@@ -178,7 +178,7 @@ Returns `200 OK` when the Go server is running.
 
 ## Behavior
 
-- Only HTTP and HTTPS URLs with a hostname are accepted.
+- Only HTTP and HTTPS URLs with a dotted hostname are accepted.
 - URLs without a scheme default to HTTPS.
 - Surrounding spaces are removed.
 - The scheme and hostname are normalized to lowercase.

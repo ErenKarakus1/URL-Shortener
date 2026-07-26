@@ -61,8 +61,15 @@ func validateLongURL(rawURL string) (string, bool) {
 	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
 		return "", false
 	}
-	if parsedURL.Hostname() == "" {
+	hostname := parsedURL.Hostname()
+	labels := strings.Split(hostname, ".")
+	if len(labels) < 2 {
 		return "", false
+	}
+	for _, label := range labels {
+		if label == "" {
+			return "", false
+		}
 	}
 	parsedURL.Host = strings.ToLower(parsedURL.Host)
 	return parsedURL.String(), true
