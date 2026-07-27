@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/ErenKarakus1/URL-Shortener/actions/workflows/ci.yml/badge.svg)](https://github.com/ErenKarakus1/URL-Shortener/actions/workflows/ci.yml)
 ![Go](https://img.shields.io/badge/Go-1.26.5-00ADD8?logo=go&logoColor=white)
-![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
+![React](https://img.shields.io/badge/React-19.2.8-20232A?logo=react&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-8.0-47A248?logo=mongodb&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-8-FF4438?logo=redis&logoColor=white)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
