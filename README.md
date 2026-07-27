@@ -1,6 +1,11 @@
 # URL Shortener
 
 [![CI](https://github.com/ErenKarakus1/URL-Shortener/actions/workflows/ci.yml/badge.svg)](https://github.com/ErenKarakus1/URL-Shortener/actions/workflows/ci.yml)
+![Go](https://img.shields.io/badge/Go-1.26.5-00ADD8?logo=go&logoColor=white)
+![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
+![MongoDB](https://img.shields.io/badge/MongoDB-8.0-47A248?logo=mongodb&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-8-FF4438?logo=redis&logoColor=white)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 A minimal full-stack URL shortener built with React, Go, Gin, MongoDB, and
 Redis.
@@ -213,6 +218,17 @@ npm run build
 GitHub Actions runs the backend tests, frontend tests, production build, and
 Docker image builds on every push and pull request.
 
+## Known limitations
+
+- URL validation checks structure only; it does not confirm that a domain exists, is reachable, or is safe.
+- Dotted hostnames are required, so single-label development hosts such as `localhost` are rejected.
+- Links do not expire and cannot be edited or deleted through the application.
+- The service has no accounts, custom short codes, analytics, or administrative interface.
+- Rate limiting uses a fixed window per client IP, and its Redis counters reset when Redis restarts.
+- The health endpoint confirms that the API is running but does not check MongoDB or Redis readiness.
+- Unknown short-link pages are rendered by the React SPA with HTTP `200`; the resolve API still returns the correct `404`.
+- Short-code generation retries at most 100 deterministic hashes if collisions occur.
+
 ## Future improvements
 
 The current version intentionally focuses on the core shortening and redirect
@@ -227,3 +243,7 @@ flow. Possible next improvements include:
 - Add optional custom short codes while preserving uniqueness checks.
 - Improve accessibility with automated checks and broader keyboard and screen-reader testing.
 - Add production deployment documentation covering HTTPS, secrets, backups, and monitoring.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
