@@ -15,7 +15,7 @@ It provides two operations:
 - Submit a long URL and receive a deterministic six-character short code.
 - Visit a short code in React, review the destination, and continue automatically or manually.
 
-## Demo
+## Demo Video
 
 [![URL Shortener demo](https://img.youtube.com/vi/mDih5SVSsW8/maxresdefault.jpg)](https://youtu.be/mDih5SVSsW8)
 
