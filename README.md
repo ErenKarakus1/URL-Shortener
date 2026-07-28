@@ -19,6 +19,8 @@ It provides two operations:
 
 [![URL Shortener demo](https://img.youtube.com/vi/mDih5SVSsW8/maxresdefault.jpg)](https://youtu.be/mDih5SVSsW8)
 
+▶ **Click the image above to play the demo video**
+
 ## Architecture
 
 ```mermaid
